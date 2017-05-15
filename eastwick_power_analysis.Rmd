@@ -1,0 +1,68 @@
+---
+title: "eastwick_power_analysis"
+author: "Jake Westfall"
+date: "5/13/2017"
+output: html_document
+---
+
+
+```{r}
+library("mgcv") # for gam()
+```
+
+```{r}
+equivalent <- read.csv("equivalent.csv")
+significant <- read.csv("significant.csv")
+il <- function(p) 1/(1+exp(-p))
+```
+
+```{r}
+x <- log(equivalent$x)
+y <- equivalent$y
+xaxis <- log(c(100, 500, 1000, 2000))
+xpred <- seq(xaxis[1], xaxis[4], length=40)
+
+fit <- gam(y ~ s(x), family=binomial)
+pred <- predict(fit, newdata=data.frame(x=xpred), se.fit=TRUE)
+plot(y=0:1, x=range(xaxis), cex=0, ylab="Power",
+   yaxt="n", xaxt="n", mgp=2:0, xlab="Number of participants (log scale)",
+   main="Equivalence test (beta1 - beta2 = 0)")
+polygon(x=c(xpred, rev(xpred), xpred[1]), col=rgb(0,0,0,.25), border=FALSE,
+        y=il(c(pred$fit+pred$se.fit, rev(pred$fit-pred$se.fit),
+               pred$fit[1]+pred$se.fit[1])))
+axis(side=1, at=xaxis, labels=exp(xaxis), cex.axis=.82)
+axis(side=2, at=seq(0,1,.2), cex.axis=.9)
+abline(h=seq(0,1,.2), col="gray",
+     v=log(seq(100,2000,100)))
+lines(x=xpred, y=il(pred$fit), lwd=2)
+```
+
+```{r}
+print(il(predict(fit, newdata=data.frame(x=log(c(700, 1200, 2000))))))
+```
+
+```{r}
+x <- log(significant$x)
+y <- significant$y
+xaxis <- log(c(50, 100, 500, 1000))
+xpred <- seq(xaxis[1], xaxis[4], length=40)
+
+fit <- gam(y ~ s(x), family=binomial)
+pred <- predict(fit, newdata=data.frame(x=xpred), se.fit=TRUE)
+plot(y=0:1, x=range(xaxis), cex=0, ylab="Power",
+   yaxt="n", xaxt="n", mgp=2:0, xlab="Number of participants (log scale)",
+   main="Significance test (beta1 - beta2 = 0.1)")
+polygon(x=c(xpred, rev(xpred), xpred[1]), col=rgb(0,0,0,.25), border=FALSE,
+        y=il(c(pred$fit+pred$se.fit, rev(pred$fit-pred$se.fit),
+               pred$fit[1]+pred$se.fit[1])))
+axis(side=1, at=xaxis, labels=exp(xaxis), cex.axis=.82)
+axis(side=2, at=seq(0,1,.2), cex.axis=.9)
+abline(h=seq(0,1,.2), col="gray",
+     v=log(c(seq(50, 100, 10), seq(100, 1000, 100))))
+lines(x=xpred, y=il(pred$fit), lwd=2)
+```
+
+
+```{r}
+print(il(predict(fit, newdata=data.frame(x=log(c(550, 800))))))
+```
